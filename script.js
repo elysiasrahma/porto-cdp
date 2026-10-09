@@ -1,68 +1,146 @@
-// Candyland Theme Portfolio JavaScript
-// Pure Vanilla JavaScript
+/**
+ * Portfolio Backend Developer - Vanilla JavaScript Logic
+ * Includes: Sticky Navbar, Mobile Nav, IntersectionObserver active links,
+ * Back to Top button, and Interactive Email Simulation Modal with Toast Notification.
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Mobile Menu Toggle
-  const menuToggle = document.getElementById('menuToggle');
+  // 1. Navigation Sticky Background Effect
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 40) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+
+  // 2. Mobile Menu Toggle
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const navLinks = document.getElementById('navLinks');
 
-  if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
+  if (mobileMenuBtn && navLinks) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
+      mobileMenuBtn.setAttribute('aria-expanded', isOpen);
     });
 
-    // Close menu when clicking link
-    navLinks.querySelectorAll('a').forEach(link => {
+    // Close mobile menu on nav link click
+    document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', () => {
-        navLinks.classList.remove('active');
+        navLinks.classList.remove('open');
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
       });
     });
   }
 
-  // 2. Copy to Clipboard Functionality
-  const copyButtons = document.querySelectorAll('.copy-btn');
-  const toast = document.getElementById('toast');
+  // 3. Active Nav Link on Scroll (Intersection Observer)
+  const sections = document.querySelectorAll('header[id], section[id]');
+  const navItems = document.querySelectorAll('.nav-link');
 
-  copyButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-target');
-      const targetElement = document.getElementById(targetId);
+  const observerOptions = {
+    root: null,
+    rootMargin: '-30% 0px -60% 0px',
+    threshold: 0
+  };
 
-      if (targetElement) {
-        const textToCopy = targetElement.innerText.trim();
-
-        // Use Clipboard API
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          showToast(`Berhasil disalin: ${textToCopy} 🍬`);
-        }).catch(() => {
-          showToast('Gagal menyalin teks! 🍬');
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const currentId = entry.target.getAttribute('id');
+        navItems.forEach(item => {
+          if (item.getAttribute('href') === `#${currentId}`) {
+            item.classList.add('active');
+          } else {
+            item.classList.remove('active');
+          }
         });
       }
     });
-  });
+  }, observerOptions);
 
-  function showToast(message) {
-    if (!toast) return;
-    toast.textContent = message;
-    toast.classList.add('show');
+  sections.forEach(section => sectionObserver.observe(section));
 
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2800);
+  // 4. Back To Top Button
+  const backToTopBtn = document.getElementById('backToTop');
+  if (backToTopBtn) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    });
+
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 
-  // 3. Floating Candy Interactive Hover effect
-  const candies = document.querySelectorAll('.floating-candy');
-  candies.forEach(candy => {
-    candy.style.cursor = 'default';
-    candy.addEventListener('mouseenter', () => {
-      candy.style.transform = 'scale(1.4) rotate(20deg)';
-      candy.style.opacity = '0.7';
-      candy.style.transition = 'transform 0.2s, opacity 0.2s';
+  // 5. Simulation Email Modal Logic
+  const emailModalOverlay = document.getElementById('emailModalOverlay');
+  const openEmailModalBtn = document.getElementById('openEmailModalBtn');
+  const closeEmailModalBtn = document.getElementById('closeEmailModalBtn');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const simEmailForm = document.getElementById('simEmailForm');
+  const simToast = document.getElementById('simToast');
+  const toastMessage = document.getElementById('toastMessage');
+
+  const openModal = () => {
+    if (emailModalOverlay) {
+      emailModalOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeModal = () => {
+    if (emailModalOverlay) {
+      emailModalOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  };
+
+  if (openEmailModalBtn) openEmailModalBtn.addEventListener('click', openModal);
+  if (closeEmailModalBtn) closeEmailModalBtn.addEventListener('click', closeModal);
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+
+  // Close modal when clicking outside of modal container
+  if (emailModalOverlay) {
+    emailModalOverlay.addEventListener('click', (e) => {
+      if (e.target === emailModalOverlay) {
+        closeModal();
+      }
     });
-    candy.addEventListener('mouseleave', () => {
-      candy.style.transform = '';
-      candy.style.opacity = '0.28';
-    });
+  }
+
+  // Handle ESC key to close modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && emailModalOverlay && emailModalOverlay.classList.contains('active')) {
+      closeModal();
+    }
   });
+
+  // Form Submission Simulation
+  if (simEmailForm) {
+    simEmailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const senderName = document.getElementById('senderName').value.trim();
+      
+      closeModal();
+      simEmailForm.reset();
+
+      // Show toast notification
+      if (toastMessage && simToast) {
+        toastMessage.textContent = `Simulasi email dari ${senderName || 'Pengunjung'} berhasil dikirim!`;
+        simToast.classList.add('show');
+
+        setTimeout(() => {
+          simToast.classList.remove('show');
+        }, 4200);
+      }
+    });
+  }
 });
